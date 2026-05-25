@@ -1,97 +1,190 @@
-﻿# 📋 待办提醒 (Todo Reminder)
+﻿<div align="center">
 
-基于 React + Express 的全栈待办事项应用，支持用户认证、优先级管理、截止时间提醒和云端数据持久化。
+<img src="public/favicon.svg" width="80" />
 
-## ✨ 功能特性
+# 📋 Todo Reminder
 
-- **用户系统** — 注册 / 登录 / JWT 鉴权，支持自动恢复会话
-- **待办 CRUD** — 创建、编辑、删除、勾选完成待办事项
-- **优先级** — 高 🔴 / 中 🟡 / 低 🟢 三级优先级，支持按优先级排序
-- **截止时间** — 设置到期时间，过期和即将到期状态高亮提醒
-- **浏览器通知** — 后台定时检查，到期时弹出桌面通知
-- **筛选与排序** — 按状态筛选（全部 / 进行中 / 已完成），按创建时间 / 优先级 / 截止时间排序
-- **乐观更新** — 创建和完成操作即时反馈，失败自动回滚
-- **双数据库支持** — Turso 云端 SQLite（生产） + 本地 SQLite（开发回退）
+### 全栈待办提醒 · 云端同步 · 多设备访问
 
-## 🏗️ 技术栈
+[![Deploy](https://img.shields.io/badge/Render-Deployed-46E3B7?style=flat-square&logo=render)](https://todo-reminder-xo0g.onrender.com)
+[![Database](https://img.shields.io/badge/Turso-Cloud%20SQLite-4FFFE4?style=flat-square&logo=turso)](https://turso.tech)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Express](https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express)](https://expressjs.com)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
 
-| 层 | 技术 |
-|---|---|
-| 前端框架 | React 19 + Vite 8 |
-| 后端框架 | Express 4 |
-| 数据库 | Turso (libsql) / SQLite (sql.js) |
-| 认证 | JWT + bcryptjs |
-| 部署 | Render (Web Service) |
-| 包管理 | npm |
+</div>
+
+---
+
+## ✨ 为什么你需要它
+
+> 任务太多记不住？截止日期总错过？Todo Reminder 帮你轻松管理待办事项，支持多设备云同步，到点自动提醒，再也不会忘事。
+
+<table>
+<tr>
+<td width="70%">
+
+### 🎯 核心功能
+
+- 🔐 **账号系统** — 注册 / 登录，JWT 安全鉴权，自动恢复登录态
+- 📝 **待办管理** — 添加、编辑、删除、勾选完成，流畅操作
+- 🔴🟡🟢 **三级优先级** — 高 / 中 / 低，一目了然
+- 📅 **截止时间** — 到期和即将到期自动高亮提醒 ⚠️
+- 🔔 **桌面通知** — 浏览器原生通知，后台定时检查
+- 🔀 **智能排序** — 按创建时间 / 优先级 / 截止时间切换
+- 🗂️ **筛选视角** — 全部 / 进行中 / 已完成一键切换
+- ⚡ **乐观更新** — 操作秒响应，失败自动回滚
+- ☁️ **云端同步** — Turso 云数据库，多设备数据一致
+- 🌍 **全民访问** — 部署在 Render，任何人打开网址就能用
+
+</td>
+<td width="30%" align="center">
+
+`
+  ╭──────────────────╮
+  │  📋 待办提醒      │
+  │                  │
+  │  [  添加任务…  ]  │
+  │  🔴🟡🟢 📅 [添加] │
+  │                  │
+  │  全部 进行中 已完成│
+  │                  │
+  │ ✅ 写周报    🔴 高 │
+  │    📅 2026-01-01  │
+  │                  │
+  │ ⬜ 买奶茶    🟢 低 │
+  │                  │
+  │    [清除已完成]    │
+  ╰──────────────────╯
+`
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ 技术架构
+
+`mermaid
+graph LR
+    A[🌐 浏览器] -->|HTTPS| B[Render 云平台]
+    B -->|Express| C[后端 API]
+    C -->|libsql| D[(Turso 云数据库)]
+    C -->|静态服务| E[React 前端]
+    
+    style A fill:#61DAFB,color:#000
+    style B fill:#46E3B7,color:#000
+    style C fill:#000,color:#fff
+    style D fill:#4FFFE4,color:#000
+    style E fill:#61DAFB,color:#000
+`
+
+| 层 | 技术 | 说明 |
+|---|---|---|
+| 🖥️ 前端 | React 19 + Vite 8 | 组件化开发，HMR 热更新 |
+| ⚙️ 后端 | Express 4 | RESTful API，JWT 鉴权 |
+| 🗄️ 数据库 | Turso / SQLite | 云端双模式，自动切换 |
+| 🔑 认证 | JWT + bcryptjs | 七天免登录，密码加密 |
+| 🚀 部署 | Render | 自动 CI/CD，Git Push 即部署 |
+| 📦 包管理 | npm | 依赖管理 |
+
+---
+
+## 🚀 快速开始
+
+### 本地开发
+
+`ash
+# 1. 克隆项目
+git clone https://github.com/chenwud/todo-reminder.git
+cd todo-reminder
+
+# 2. 安装依赖
+npm install
+
+# 3. 启动后端（新终端）
+npm run dev:server    # → http://localhost:3001
+
+# 4. 启动前端（另一个终端）
+npm run dev           # → http://localhost:5173
+`
+
+> 💡 本地默认使用 SQLite 文件数据库，无需额外配置。前端 /api/* 请求自动代理到后端。
+
+### 线上访问
+
+> 🌍 **直接打开** 👉 [todo-reminder-xo0g.onrender.com](https://todo-reminder-xo0g.onrender.com)
+
+第一次加载可能需要 30~60 秒（免费套餐休眠唤醒），之后正常使用。
+
+---
+
+## 🔌 API 一览
+
+`
+┌─────────────────────────────────────────────────────────┐
+│  POST   /api/auth/register    📝 注册                   │
+│  POST   /api/auth/login       🔑 登录                   │
+│  GET    /api/auth/me          👤 获取当前用户            │
+│─────────────────────────────────────────────────────────│
+│  GET    /api/todos            📋 获取所有待办            │
+│  POST   /api/todos            ➕ 创建待办                │
+│  PUT    /api/todos/:id        ✏️ 更新待办                │
+│  PATCH  /api/todos/:id/toggle ✅ 切换完成状态            │
+│  DELETE /api/todos/:id        🗑️ 删除待办                │
+│  DELETE /api/todos/completed  🧹 批量清除已完成          │
+└─────────────────────────────────────────────────────────┘
+`
+
+---
 
 ## 📁 项目结构
 
 `
 todo-reminder/
-├── public/                 # 静态资源
-├── server/                 # 后端
-│   ├── index.js            # Express 入口，静态文件服务
-│   ├── db.js               # 数据库层（Turso / SQLite 双模式）
-│   ├── middleware/
-│   │   └── auth.js         # JWT 生成与验证中间件
+├── src/                    # 🖥️ React 前端
+│   ├── App.jsx             #   主页面 & 待办逻辑
+│   ├── App.css             #   全局样式
+│   ├── LoginPage.jsx       #   登录 / 注册页
+│   ├── AuthContext.jsx     #   认证状态管理
+│   ├── api.js              #   API 封装
+│   └── main.jsx            #   入口
+├── server/                 # ⚙️ Express 后端
+│   ├── index.js            #   服务入口 & 静态托管
+│   ├── db.js               #   数据库双模式 (Turso / SQLite)
+│   ├── middleware/auth.js  #   JWT 中间件
 │   └── routes/
-│       ├── auth.js         # 注册 / 登录 / 获取当前用户
-│       └── todos.js        # 待办 CRUD + 批量清除
-├── src/                    # 前端
-│   ├── main.jsx            # React 入口
-│   ├── App.jsx             # 主页面：待办列表、表单、筛选排序
-│   ├── App.css             # 全局样式
-│   ├── LoginPage.jsx       # 登录 / 注册页面
-│   ├── AuthContext.jsx     # 认证状态管理 (Context + JWT)
-│   └── api.js              # 前端 API 封装
-├── render.yaml             # Render 部署配置
-├── vite.config.js          # Vite 配置（代理 API 到后端）
-└── package.json
+│       ├── auth.js         #   认证路由
+│       └── todos.js        #   待办 CRUD 路由
+├── public/                 # 📦 静态资源
+├── render.yaml             # 🚀 Render 部署配置
+├── vite.config.js          # ⚡ Vite 配置
+└── package.json            # 📦 依赖
 `
 
-## 🚀 本地开发
+---
 
-`ash
-# 安装依赖
-npm install
+## 🗓️ 开发历程
 
-# 启动前端开发服务器 (localhost:5173)
-npm run dev
-
-# 另开终端启动后端 (localhost:3001)
-npm run dev:server
+`
+545f2d1  📦 初始化    React + Express 脚手架，项目骨架
+   │
+f73d4bb  ☁️ 上云      数据库迁移到 Turso 云双模式
+   │
+3ac8dcc  ⚡ 性能     前端乐观更新 + 500ms 防抖写盘
+   │
+3816ba4  📚 文档     完善 README，技术栈与架构说明
+   │
+26ca5ed  🔐 部署     注入 Turso 凭证，Render 自动部署
+   │
+  HEAD   ✨ 当前      上线运行，对外开放访问
 `
 
-前端 /api/* 请求通过 Vite proxy 转发到后端 localhost:3001。
+---
 
-## 🌐 部署
+<div align="center">
 
-项目部署在 [Render](https://render.com)，配置文件为 ender.yaml。
+**Made with ❤️ by Chen · 用最简单的方式管理你的每一天**
 
-生产环境使用 [Turso](https://turso.tech) 云数据库，通过 TURSO_URL 和 TURSO_TOKEN 环境变量配置。未设置时自动回退到本地 SQLite。
-
-公开访问地址：[https://todo-reminder-xo0g.onrender.com](https://todo-reminder-xo0g.onrender.com)
-
-## 🔑 API 接口
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | /api/auth/register | 注册 |
-| POST | /api/auth/login | 登录 |
-| GET | /api/auth/me | 获取当前用户 |
-| GET | /api/todos | 获取所有待办 |
-| POST | /api/todos | 创建待办 |
-| PUT | /api/todos/:id | 更新待办 |
-| PATCH | /api/todos/:id/toggle | 切换完成状态 |
-| DELETE | /api/todos/:id | 删除待办 |
-| DELETE | /api/todos/completed/bulk | 清除已完成 |
-
-## 🛠️ 开发历程
-
-1. **项目初始化** — Vite + React 脚手架，Express 后端搭建
-2. **用户认证** — JWT 注册 / 登录，AuthContext 全局状态管理
-3. **待办 CRUD** — 完整的创建、编辑、删除、完成切换功能
-4. **数据库** — 先本地 SQLite (sql.js)，后迁移到 Turso 云端双模式
-5. **乐观更新** — 创建和完成操作即时响应，失败回滚
-6. **防抖写盘** — 本地模式下 500ms 防抖批量写入，降低 I/O 开销
-7. **部署上线** — Render Web Service 部署，Turso 云端数据库持久化
+</div>

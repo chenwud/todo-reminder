@@ -8,6 +8,6 @@
       - key: NODE_ENV
         value: production
       - key: TURSO_URL
-        sync: false
+        value: libsql://todo-db-chenwud.aws-ap-northeast-1.turso.io
       - key: TURSO_TOKEN
-        sync: false
+        value: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Nzk3MDU4NTgsImlkIjoiMDE5ZTVkNzEtYTkwMS03MTQ1LTkwOGYtM2YyOTk1MWQyYmI5IiwicmlkIjoiZmM2ZDM4MGItNDVjOC00MWUzLWExYzYtYzBmYmZmZjNmZGMwIn0.3ckH02gaBmwZH2IgzDesxsMyBZUDJ3J76rzryrhEoPxGM7vPIfJVQTUgzfplODI_a_wz3JLmf-wkdfk6u_DFAg

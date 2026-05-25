@@ -1,16 +1,16 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from './AuthContext';
-import { todos } from './api';
-import LoginPage from './LoginPage';
-import './App.css';
+﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "./AuthContext";
+import { todos } from "./api";
+import LoginPage from "./LoginPage";
+import "./App.css";
 
-const PRIORITY_LABELS = { high: '🔴 高', medium: '🟡 中', low: '🟢 低' };
+const PRIORITY_LABELS = { high: "\uD83D\uDD34 高", medium: "\uD83D\uDFE1 中", low: "\uD83D\uDFE2 低" };
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
 
 function fmtDate(iso) {
-  if (!iso) return '';
+  if (!iso) return "";
   const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
@@ -28,11 +28,11 @@ function isDueSoon(due) {
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
   const [items, setItems] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('created');
+  const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created");
   const [editingId, setEditingId] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', due: '' });
+  const [form, setForm] = useState({ title: "", description: "", priority: "medium", due: "" });
   const inputRef = useRef(null);
 
   // 登录后加载数据
@@ -46,7 +46,7 @@ export default function App() {
 
   // 提醒检查
   useEffect(() => {
-    if (!user || !('Notification' in window) || Notification.permission === 'denied') return;
+    if (!user || !("Notification" in window) || Notification.permission === "denied") return;
     const interval = setInterval(() => {
       const now = Date.now();
       setItems((prev) => {
@@ -55,7 +55,7 @@ export default function App() {
           if (t.completed || !t.due || t.notified) return t;
           const ms = new Date(t.due) - now;
           if (ms <= 0 && ms > -60000) {
-            new Notification('⏰ 待办提醒', { body: `"${t.title}" 已到期！`, icon: '/favicon.svg' });
+            new Notification("\u23F0 待办提醒", { body: `"${t.title}" 已到期！`, icon: "/favicon.svg" });
             todos.update(t.id, { notified: true }).catch(() => {});
             changed = true;
             return { ...t, notified: true };
@@ -69,13 +69,13 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, []);
 
   const resetForm = useCallback(() => {
-    setForm({ title: '', description: '', priority: 'medium', due: '' });
+    setForm({ title: "", description: "", priority: "medium", due: "" });
     setEditingId(null);
   }, []);
 
@@ -84,52 +84,79 @@ export default function App() {
     const title = form.title.trim();
     if (!title) return;
 
-    const body = { title, description: form.description.trim(), priority: form.priority, due: form.due || null };
-
     if (editingId) {
+      // 更新：等待后端返回
+      const body = { title, description: form.description.trim(), priority: form.priority, due: form.due || null };
       const updated = await todos.update(editingId, { ...body, notified: false });
       setItems((prev) => prev.map((t) => (t.id === editingId ? updated : t)));
     } else {
-      const created = await todos.create(body);
-      setItems((prev) => [created, ...prev]);
+      // 创建：乐观更新
+      const body = { title, description: form.description.trim(), priority: form.priority, due: form.due || null };
+      const optimisticId = "optimistic-" + Date.now();
+      const optimistic = { id: optimisticId, userId: user.id, completed: false, notified: false, createdAt: new Date().toISOString(), ...body };
+      setItems((prev) => [optimistic, ...prev]);
+      resetForm();
+      inputRef.current?.focus();
+
+      try {
+        const created = await todos.create(body);
+        setItems((prev) => prev.map((t) => (t.id === optimisticId ? created : t)));
+      } catch {
+        setItems((prev) => prev.filter((t) => t.id !== optimisticId));
+      }
     }
-    resetForm();
-    inputRef.current?.focus();
+    if (editingId) resetForm();
   };
 
   const toggleComplete = async (id) => {
-    const updated = await todos.toggle(id);
-    setItems((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    // 乐观切换
+    setItems((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    try {
+      await todos.toggle(id);
+    } catch {
+      // 回滚
+      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    }
   };
 
   const deleteTodo = async (id) => {
-    await todos.remove(id);
-    setItems((prev) => prev.filter((t) => t.id !== id));
+    const prev = items;
+    setItems((p) => p.filter((t) => t.id !== id));
     if (editingId === id) resetForm();
+    try {
+      await todos.remove(id);
+    } catch {
+      setItems(prev);
+    }
   };
 
   const startEdit = (todo) => {
     setEditingId(todo.id);
-    setForm({ title: todo.title, description: todo.description || '', priority: todo.priority, due: todo.due || '' });
+    setForm({ title: todo.title, description: todo.description || "", priority: todo.priority, due: todo.due || "" });
     inputRef.current?.focus();
   };
 
   const clearCompleted = async () => {
-    if (!window.confirm('确定清除所有已完成任务？')) return;
-    await todos.clearCompleted();
-    setItems((prev) => prev.filter((t) => !t.completed));
+    if (!window.confirm("确定清除所有已完成任务？")) return;
+    const prev = items;
+    setItems((p) => p.filter((t) => !t.completed));
+    try {
+      await todos.clearCompleted();
+    } catch {
+      setItems(prev);
+    }
   };
 
   if (authLoading) return <div className="app"><div className="empty-state">⏳ 加载中…</div></div>;
   if (!user) return <LoginPage />;
 
   let filtered = items;
-  if (filter === 'active') filtered = filtered.filter((t) => !t.completed);
-  else if (filter === 'completed') filtered = filtered.filter((t) => t.completed);
+  if (filter === "active") filtered = filtered.filter((t) => !t.completed);
+  else if (filter === "completed") filtered = filtered.filter((t) => t.completed);
 
-  if (sortBy === 'priority') {
+  if (sortBy === "priority") {
     filtered = [...filtered].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
-  } else if (sortBy === 'due') {
+  } else if (sortBy === "due") {
     filtered = [...filtered].sort((a, b) => {
       if (!a.due && !b.due) return 0;
       if (!a.due) return 1;
@@ -162,7 +189,7 @@ export default function App() {
             <option value="low">🟢 低</option>
           </select>
           <input className="form-date" type="datetime-local" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} />
-          <button className="btn btn-primary" type="submit">{editingId ? '更新' : '添加'}</button>
+          <button className="btn btn-primary" type="submit">{editingId ? "更新" : "添加"}</button>
           {editingId && <button className="btn btn-ghost" type="button" onClick={resetForm}>取消</button>}
         </div>
         <textarea className="form-textarea" placeholder="备注（可选）" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
@@ -170,9 +197,9 @@ export default function App() {
 
       <div className="toolbar">
         <div className="filter-group">
-          {['all', 'active', 'completed'].map((f) => (
-            <button key={f} className={`btn btn-filter ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-              {{ all: '全部', active: '进行中', completed: '已完成' }[f]}
+          {["all", "active", "completed"].map((f) => (
+            <button key={f} className={`btn btn-filter ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
+              {{ all: "全部", active: "进行中", completed: "已完成" }[f]}
             </button>
           ))}
         </div>
@@ -185,11 +212,11 @@ export default function App() {
 
       <div className="todo-list">
         {dataLoading && <div className="empty-state">⏳ 加载中…</div>}
-        {!dataLoading && filtered.length === 0 && <div className="empty-state">🎉 {filter === 'all' ? '还没有待办事项，添加一个吧！' : filter === 'active' ? '所有任务都已完成！' : '还没有已完成的任务'}</div>}
+        {!dataLoading && filtered.length === 0 && <div className="empty-state">🎉 {filter === "all" ? "还没有待办事项，添加一个吧！" : filter === "active" ? "所有任务都已完成！" : "还没有已完成的任务"}</div>}
         {filtered.map((todo) => (
-          <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${isOverdue(todo.due) && !todo.completed ? 'overdue' : ''} ${isDueSoon(todo.due) && !todo.completed ? 'due-soon' : ''}`}>
-            <button className={`btn-check ${todo.completed ? 'checked' : ''}`} onClick={() => toggleComplete(todo.id)} title={todo.completed ? '标记未完成' : '标记完成'}>
-              {todo.completed ? '✅' : '⬜'}
+          <div key={todo.id} className={`todo-item ${todo.completed ? "completed" : ""} ${isOverdue(todo.due) && !todo.completed ? "overdue" : ""} ${isDueSoon(todo.due) && !todo.completed ? "due-soon" : ""}`}>
+            <button className={`btn-check ${todo.completed ? "checked" : ""}`} onClick={() => toggleComplete(todo.id)} title={todo.completed ? "标记未完成" : "标记完成"}>
+              {todo.completed ? "✅" : "⬜"}
             </button>
             <div className="todo-body">
               <div className="todo-title-row">
@@ -199,10 +226,10 @@ export default function App() {
               {todo.description && <p className="todo-desc">{todo.description}</p>}
               <div className="todo-meta">
                 {todo.due && (
-                  <span className={`todo-due ${isOverdue(todo.due) && !todo.completed ? 'text-danger' : isDueSoon(todo.due) && !todo.completed ? 'text-warning' : ''}`}>
+                  <span className={`todo-due ${isOverdue(todo.due) && !todo.completed ? "text-danger" : isDueSoon(todo.due) && !todo.completed ? "text-warning" : ""}`}>
                     📅 {fmtDate(todo.due)}
-                    {isOverdue(todo.due) && !todo.completed && ' ⚠️ 已过期'}
-                    {isDueSoon(todo.due) && !todo.completed && ' ⏰ 即将到期'}
+                    {isOverdue(todo.due) && !todo.completed && " ⚠️ 已过期"}
+                    {isDueSoon(todo.due) && !todo.completed && " ⏰ 即将到期"}
                   </span>
                 )}
                 <span className="todo-created">创建于 {fmtDate(todo.createdAt)}</span>
